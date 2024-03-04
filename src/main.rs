@@ -14,11 +14,11 @@ use snake_rust::Snake;
 const SNAKE_COLOR_PAIR: i16 = 1;
 const BERRY_COLOR_PAIR: i16 = 2;
 
-fn new_berry() -> Vector2<i8> {
+fn new_berry() -> Vector2<i16> {
     let mut rng = rand::thread_rng();
-    Vector2::<i8>::new(
-        rng.gen_range(1..COLS() - 1) as i8,
-        rng.gen_range(1..LINES() - 1) as i8,
+    Vector2::<i16>::new(
+        rng.gen_range(1..COLS() - 1) as i16,
+        rng.gen_range(1..LINES() - 1) as i16,
     )
 }
 
@@ -39,7 +39,7 @@ fn draw_snake(snake: &Snake) {
     assert_eq!(attroff(COLOR_PAIR(SNAKE_COLOR_PAIR)), OK, "attroff failed");
 }
 
-fn draw_berry(berry: &Vector2<i8>) {
+fn draw_berry(berry: &Vector2<i16>) {
     assert_eq!(attron(COLOR_PAIR(BERRY_COLOR_PAIR)), OK, "attron failed");
     assert_eq!(
         mvaddch(berry.y as i32, berry.x as i32, '@' as u32),
@@ -98,14 +98,14 @@ fn main() {
 
     while running {
         let pressed = getch();
-        let mut direction: Vector2<i8> = snake.direction;
-        let boundaries = Vector4::<i8>::new(1, 1, COLS() as i8, LINES() as i8);
+        let mut direction: Vector2<i16> = snake.direction;
+        let boundaries = Vector4::<i16>::new(0, 0, COLS() as i16, LINES() as i16);
 
         match pressed {
-            KEY_UP => direction = Vector2::<i8>::new(0, -1),
-            KEY_DOWN => direction = Vector2::<i8>::new(0, 1),
-            KEY_LEFT => direction = Vector2::<i8>::new(-1, 0),
-            KEY_RIGHT => direction = Vector2::<i8>::new(1, 0),
+            KEY_UP => direction = Vector2::<i16>::new(0, -1),
+            KEY_DOWN => direction = Vector2::<i16>::new(0, 1),
+            KEY_LEFT => direction = Vector2::<i16>::new(-1, 0),
+            KEY_RIGHT => direction = Vector2::<i16>::new(1, 0),
             0x1b => {
                 running = false;
                 continue;
@@ -113,8 +113,11 @@ fn main() {
             _ => {}
         }
 
+        snake.set_direction(&direction);
+        snake.step();
+
         if snake.try_hit_walls(&boundaries) || snake.try_eat_self() {
-            running = false;
+            break;
         }
 
         if snake.try_eat_food(&berry) {
@@ -122,8 +125,6 @@ fn main() {
         }
 
         erase();
-        snake.set_direction(&direction);
-        snake.step();
         draw_snake(&snake);
         draw_berry(&berry);
         draw_stats(win, snake.body.len());

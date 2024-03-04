@@ -3,13 +3,13 @@ Logic for snake
 */
 use nalgebra::{Vector2, Vector4};
 
-const MAX_SNAKE_LENGTH: i8 = 100;
+const MAX_SNAKE_LENGTH: i16 = 100;
 const MAX_SNAKE_SPEED: f32 = 10.0;
 
 //A snake struct
 pub struct Snake {
-    pub body: Vec<Vector2<i8>>,
-    pub direction: Vector2<i8>,
+    pub body: Vec<Vector2<i16>>,
+    pub direction: Vector2<i16>,
     pub speed: f32,
 }
 
@@ -19,7 +19,7 @@ impl Default for Snake {
     }
 }
 
-fn is_collision(a: &Vector2<i8>, b: &Vector2<i8>, direction: &Vector2<i8>) -> bool {
+fn is_collision(a: &Vector2<i16>, b: &Vector2<i16>, direction: &Vector2<i16>) -> bool {
     !(a.y != b.y || a.x != b.x && (a.x - direction.x) != b.x)
 }
 
@@ -46,7 +46,7 @@ impl Snake {
         self.body.push(self.body[self.body.len() - 1]);
     }
 
-    pub fn set_direction(&mut self, direction: &Vector2<i8>) {
+    pub fn set_direction(&mut self, direction: &Vector2<i16>) {
         let dir_len = direction.dot(direction);
         let dp = direction.dot(&self.direction);
         if dp == 0 && dir_len != 0 {
@@ -60,7 +60,7 @@ impl Snake {
         }
     }
 
-    pub fn test_collision(&self, point: &Vector2<i8>) -> bool {
+    pub fn test_collision(&self, point: &Vector2<i16>) -> bool {
         for &part in &self.body {
             if is_collision(&part, point, &self.direction) {
                 return true;
@@ -70,7 +70,7 @@ impl Snake {
         false
     }
 
-    pub fn try_eat_food(&mut self, food: &Vector2<i8>) -> bool {
+    pub fn try_eat_food(&mut self, food: &Vector2<i16>) -> bool {
         if self.test_collision(food) {
             self.grow();
             self.speed_up();
@@ -88,10 +88,10 @@ impl Snake {
         }
         false
     }
-    pub fn try_hit_walls(&self, boundaries: &Vector4<i8>) -> bool {
-        self.body[0].x < boundaries.x
-            || self.body[0].x > boundaries.z
-            || self.body[0].y < boundaries.y
-            || self.body[0].y > boundaries.w
+    pub fn try_hit_walls(&self, boundaries: &Vector4<i16>) -> bool {
+        self.body[0].x <= boundaries.x
+            || self.body[0].x >= boundaries.z
+            || self.body[0].y <= boundaries.y
+            || self.body[0].y >= boundaries.w
     }
 }
