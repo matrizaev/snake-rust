@@ -1,5 +1,5 @@
 use nalgebra::{Vector2, Vector4};
-use snake_rust::Snake;
+use snake_rust::{food::Food, snake::Snake};
 
 #[test]
 fn test_snake() {
@@ -17,7 +17,8 @@ fn test_snake() {
     assert!(snake.body[0].x == 3 && snake.body[0].y == 1);
     assert!(snake.direction.x == 1 && snake.direction.y == 0);
 
-    let food = Vector2::<i16>::new(3, 1);
+    let food = Food::_new("test", Vector2::<i16>::new(3, 1), 1);
+
     assert!(snake.try_eat_food(&food) == true);
     assert!(snake.body.len() == 2);
     assert!(snake.body[1].x == 3 && snake.body[1].y == 1);

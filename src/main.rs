@@ -2,24 +2,21 @@
 An ncurses-based snake game in Rust.
 */
 
-extern crate nalgebra;
-extern crate ncurses;
-extern crate rand;
-
 use nalgebra::{Vector2, Vector4};
 use ncurses::*;
-use rand::*;
-use snake_rust::Snake;
+
+use snake_rust::{food::Food, snake::Snake};
 
 const SNAKE_COLOR_PAIR: i16 = 1;
 const BERRY_COLOR_PAIR: i16 = 2;
+const FRUIT_COLOR_PAIR: i16 = 3;
 
-fn new_berry() -> Vector2<i16> {
-    let mut rng = rand::thread_rng();
-    Vector2::<i16>::new(
-        rng.gen_range(1..COLS() - 1) as i16,
-        rng.gen_range(1..LINES() - 1) as i16,
-    )
+fn get_food_color_code(food: &Food) -> i16 {
+    match food.name {
+        "berry" => BERRY_COLOR_PAIR,
+        "fruit" => FRUIT_COLOR_PAIR,
+        _ => panic!("Unknown food type"),
+    }
 }
 
 fn draw_snake(snake: &Snake) {
@@ -39,14 +36,15 @@ fn draw_snake(snake: &Snake) {
     assert_eq!(attroff(COLOR_PAIR(SNAKE_COLOR_PAIR)), OK, "attroff failed");
 }
 
-fn draw_berry(berry: &Vector2<i16>) {
-    assert_eq!(attron(COLOR_PAIR(BERRY_COLOR_PAIR)), OK, "attron failed");
+fn draw_food(food: &Food) {
+    let color = get_food_color_code(food);
+    assert_eq!(attron(COLOR_PAIR(color)), OK, "attron failed");
     assert_eq!(
-        mvaddch(berry.y as i32, berry.x as i32, '@' as u32),
+        mvaddch(food.position.y as i32, food.position.x as i32, '@' as u32),
         OK,
         "mvaddch failed"
     );
-    assert_eq!(attroff(COLOR_PAIR(BERRY_COLOR_PAIR)), OK, "attroff failed");
+    assert_eq!(attroff(COLOR_PAIR(color)), OK, "attroff failed");
 }
 
 fn draw_stats(win: WINDOW, score: usize) {
@@ -86,20 +84,26 @@ fn init_ncurses() -> WINDOW {
         OK,
         "init_pair failed"
     );
+    assert_eq!(
+        init_pair(FRUIT_COLOR_PAIR, COLOR_BLUE, COLOR_BLACK),
+        OK,
+        "init_pair failed"
+    );
     assert_eq!(wrefresh(win), OK, "wrefresh failed");
     win
 }
 
 fn main() {
     let win = init_ncurses();
+    let mut boundaries = Vector4::<i16>::new(0, 0, COLS() as i16, LINES() as i16);
     let mut snake = Snake::new();
-    let mut berry = new_berry();
+    let mut food = Food::new(&boundaries);
     let mut running = true;
 
     while running {
         let pressed = getch();
         let mut direction: Vector2<i16> = snake.direction;
-        let boundaries = Vector4::<i16>::new(0, 0, COLS() as i16, LINES() as i16);
+        boundaries = Vector4::<i16>::new(0, 0, COLS() as i16, LINES() as i16);
 
         match pressed {
             KEY_UP => direction = Vector2::<i16>::new(0, -1),
@@ -120,13 +124,13 @@ fn main() {
             break;
         }
 
-        if snake.try_eat_food(&berry) {
-            berry = new_berry();
+        if snake.try_eat_food(&food) {
+            food = Food::new(&boundaries);
         }
 
         erase();
         draw_snake(&snake);
-        draw_berry(&berry);
+        draw_food(&food);
         draw_stats(win, snake.body.len());
 
         //sleep for a bit
